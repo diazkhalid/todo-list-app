@@ -13,6 +13,15 @@ class Home extends StatefulWidget {
 
 class _HomeState extends State<Home> {
   final todoList = Todo.todoList();
+  List<Todo> foundTodo = [];
+  final _todoController = TextEditingController();
+
+  @override
+  void initState() {
+    foundTodo = todoList;
+    super.initState();
+  }
+
   void _handleTodoChange(Todo todo) {
     setState(() {
       todo.isDone = !todo.isDone;
@@ -25,6 +34,32 @@ class _HomeState extends State<Home> {
     });
   }
 
+  void _handleAddTodoItem(String text) {
+    setState(() {
+      todoList.add(Todo(
+          id: DateTime.now().millisecondsSinceEpoch.toString(),
+          todoText: text));
+    });
+    _todoController.clear();
+  }
+
+  void _handleRunFilter(String enteredKeyword) {
+    List<Todo> result = [];
+    if (enteredKeyword.isEmpty) {
+      result = todoList;
+    } else {
+      result = todoList
+          .where((item) => item.todoText!
+              .toLowerCase()
+              .contains(enteredKeyword.toLowerCase()))
+          .toList();
+    }
+
+    setState(() {
+      foundTodo = result;
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -34,9 +69,10 @@ class _HomeState extends State<Home> {
         children: [
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 15),
+            margin: const EdgeInsets.only(bottom: 65),
             child: Column(
               children: [
-                const SearchBox(),
+                searchBox(),
                 Expanded(
                   child: ListView(
                     children: [
@@ -50,7 +86,7 @@ class _HomeState extends State<Home> {
                           ),
                         ),
                       ),
-                      for (Todo todoo in todoList)
+                      for (Todo todoo in foundTodo.reversed)
                         ToDoItem(
                           todo: todoo,
                           onTodoChaged: _handleTodoChange,
@@ -82,8 +118,9 @@ class _HomeState extends State<Home> {
                               spreadRadius: 0.0)
                         ],
                         borderRadius: BorderRadius.circular(10)),
-                    child: const TextField(
-                      decoration: InputDecoration(
+                    child: TextField(
+                      controller: _todoController,
+                      decoration: const InputDecoration(
                         hintText: 'Add new todo item',
                         border: InputBorder.none,
                       ),
@@ -93,7 +130,7 @@ class _HomeState extends State<Home> {
                 Container(
                   margin: const EdgeInsets.only(bottom: 20, right: 20),
                   child: ElevatedButton(
-                    onPressed: () => {},
+                    onPressed: () => {_handleAddTodoItem(_todoController.text)},
                     style: ElevatedButton.styleFrom(
                       backgroundColor: tdBlue,
                       shape: RoundedRectangleBorder(
@@ -116,47 +153,16 @@ class _HomeState extends State<Home> {
     );
   }
 
-  AppBar _buildAppBar() {
-    return AppBar(
-      elevation: 0,
-      backgroundColor: tdBGColor,
-      title: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          const Icon(
-            Icons.menu,
-            color: tdBlack,
-            size: 30,
-          ),
-          Container(
-            height: 40,
-            width: 40,
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(20),
-              child: Image.asset('assets/images/avatar.jpg'),
-            ),
-          )
-        ],
-      ),
-    );
-  }
-}
-
-class SearchBox extends StatelessWidget {
-  const SearchBox({
-    super.key,
-  });
-
-  @override
-  Widget build(BuildContext context) {
+  Widget searchBox() {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 15),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(20),
       ),
-      child: const TextField(
-        decoration: InputDecoration(
+      child: TextField(
+        onChanged: (val) => _handleRunFilter(val),
+        decoration: const InputDecoration(
             contentPadding: EdgeInsets.all(0),
             prefixIcon: Icon(
               Icons.search,
@@ -170,4 +176,29 @@ class SearchBox extends StatelessWidget {
       ),
     );
   }
+}
+
+AppBar _buildAppBar() {
+  return AppBar(
+    elevation: 0,
+    backgroundColor: tdBGColor,
+    title: Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        const Icon(
+          Icons.menu,
+          color: tdBlack,
+          size: 30,
+        ),
+        Container(
+          height: 40,
+          width: 40,
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(20),
+            child: Image.asset('assets/images/avatar.jpg'),
+          ),
+        )
+      ],
+    ),
+  );
 }
